@@ -1,39 +1,37 @@
 module Main where
 
 import Media.Streaming.GStreamer as Gst
-import System.Glib.Properties as G
+import System.Glib.Properties
 import Graphics.UI.Gtk
-import Lib
+import Graphics.UI.Gtk.Player
 
 import Control.Monad.Trans (liftIO)
 import Data.Maybe (fromJust)
+import Control.Monad (void)
 
 main :: IO ()
 main = do
-  initGUI
+  void initGUI
   Gst.init
 
   window <- windowNew
   testBox <- vBoxNew True 0
-  --testText <- labelNew (Just "test")
 
   containerAdd window testBox
-  --containerAdd testBox testText
 
-  pipeline <- pipelineNew "xoverlay"
+  pipe <- pipelineNew "xoverlay"
   src <- fromJust <$> elementFactoryMake "playbin2" (Just "source")
-  --sink <- fromJust <$> elementFactoryMake "xvimagesink" (Just "sink")
-  mapM_ (binAdd (castToPipeline pipeline)) [src]--,sink]
-  --elementLink src sink
+  void $ binAdd (castToPipeline pipe) src
 
-  G.objectSetPropertyString "uri" src "http://www.sample-videos.com/video/mp4/240/big_buck_bunny_240p_50mb.mp4"
+  objectSetPropertyString "uri" src "http://docs.gstreamer.com/media/sintel_trailer-480p.webm"
 
-  window `on` deleteEvent $ liftIO mainQuit >> return False
-  widgetShowAll window
+  void . on window deleteEvent . liftIO $ mainQuit >> return False
 
-  videoPlayer Player { source = src --sink
-                     , container = toContainer testBox
-                     , pipeline = pipeline
-                     }
+  widgetShowAll window -- This shouldn't be necessary (BUT IT IS!)
+
+  player <- playerNew PD { source = src, pipeline = pipe }
+
+  containerAdd testBox player
+  widgetShowAll player
 
   mainGUI
