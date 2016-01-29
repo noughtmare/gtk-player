@@ -1,1 +1,1 @@
-# gtk-videoplayer
+# gtk-player
